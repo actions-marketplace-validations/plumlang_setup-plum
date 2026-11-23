@@ -1,0 +1,18 @@
+THIRD-PARTY NOTICES
+===================
+
+This repository's own code uses no third-party components: setup-plum.sh is
+a bash script that runs the tools already on the runner (bash, curl, tar,
+sha256sum or shasum, jq or python3, and unzip or PowerShell on Windows),
+none of which are distributed here.
+
+action.yml and the workflows use these GitHub Actions, pinned by commit:
+
+  * actions/cache (restore, save)  - MIT, Copyright (c) 2018 GitHub, Inc.
+  * actions/checkout               - MIT, Copyright (c) 2018 GitHub, Inc.
+
+The action downloads Plumlang (plumlang/plumlang), which is under the
+Plumlang Commercial License 1.0 and is not distributed here.
+
+If you believe a component is missing from this list, please open an issue
+or email hello@elixpo.com.

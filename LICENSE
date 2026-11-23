@@ -1,0 +1,91 @@
+ELIXPO LICENSE
+==============
+
+This repository is part of the Elixpo ecosystem and is licensed under the
+Elixpo licensing standard, the same standard that applies to every Elixpo
+repository. Product-specific terms for this repository are declared in the
+NOTICE file at the repository root (the "notice board"), which must be read
+together with this LICENSE.
+
+The LICENSES/ directory holds the canonical texts; this file is the pointer.
+
+This repository is setup-plum, the GitHub Action that installs Plumlang in
+CI. It holds two kinds of things, under two grants. It does not contain
+Plumlang itself, which the action downloads from Plumlang's releases.
+
+CODE
+====
+
+All code in this repository (action.yml, setup-plum.sh, the workflows under
+.github/, and any scripts and configuration) is provided under:
+
+	SPDX-License-Identifier: MIT WITH Plumlang-trademarks
+
+Being under the terms of the MIT License, as set out in:
+
+	LICENSES/preferred/MIT
+
+CONTENT
+=======
+
+The documentation and other written content (README.md and the text in
+LICENSES/README.md) is provided under:
+
+	SPDX-License-Identifier: CC-BY-4.0 WITH Plumlang-trademarks
+
+Being under the terms of the Creative Commons Attribution 4.0 International
+License, as set out in:
+
+	LICENSES/preferred/CC-BY-4.0
+
+PLUMLANG ITSELF
+===============
+
+The plum binaries the action installs are downloaded from
+https://github.com/plumlang/plumlang/releases and are under the licence
+shipped in each release archive (the Plumlang Commercial License 1.0). This
+repository grants nothing over them.
+
+EXCEPTION (names, marks, and royalties)
+=======================================
+
+The code and content grants above carry an explicit trademark and naming
+exception:
+
+	LICENSES/exceptions/Plumlang-trademarks
+
+which also incorporates the Elixpo reservations in:
+
+	LICENSES/exceptions/Oreo-trademarks
+
+The licences grant rights to the files as files. They do NOT grant rights
+to the Plumlang, Elixpo or Oreo names or brands, nor the right to publish a
+fork of this action under them.
+
+NOTICE BOARD (per-product reservations)
+=======================================
+
+Reservations for this repository, such as the setup-plum name and the
+official action, are declared in:
+
+	NOTICE
+
+THIRD-PARTY NOTICES
+===================
+
+Third-party components keep their own licences:
+
+	LICENSES/notices/notice-board
+	LICENSES/README.md
+
+CONTRIBUTIONS
+=============
+
+By submitting a contribution to this repository you agree that it is licensed
+inbound under this standard (MIT for code, CC-BY-4.0 for content) and that
+you have the right to submit it. The Developer Certificate of Origin
+(https://developercertificate.org) applies to every commit. We do not require
+a CLA.
+
+Copyright (c) 2026 Elixpo and the Plumlang contributors.
+SPDX-License-Identifier: MIT WITH Plumlang-trademarks

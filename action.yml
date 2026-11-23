@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: MIT WITH Plumlang-trademarks
+name: Setup Plumlang
+description: Install Plumlang (the plum command) on Linux, macOS and Windows runners, checked against the release's SHA256SUMS.
+author: Elixpo
+branding:
+  icon: terminal
+  color: purple
+
+inputs:
+  version:
+    description: >-
+      The Plumlang version: latest (the default), an exact version such as
+      2.1.4 or v2.1.4, or a prefix such as 2.1 or 2 for the newest release
+      that matches it.
+    required: false
+    default: latest
+  token:
+    description: A GitHub token for the releases API, to avoid its rate limits.
+    required: false
+    default: ${{ github.token }}
+  cache:
+    description: Cache the installed plum with actions/cache, keyed by version, OS and architecture.
+    required: false
+    default: "true"
+
+outputs:
+  version:
+    description: The exact Plumlang version installed, such as 2.1.4.
+    value: ${{ steps.resolve.outputs.version }}
+  path:
+    description: The directory holding the plum binary, which is added to PATH.
+    value: ${{ steps.install.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve the Plumlang version
+      id: resolve
+      shell: bash
+      env:
+        PLUM_VERSION: ${{ inputs.version }}
+        PLUM_TOKEN: ${{ inputs.token }}
+      run: bash "$GITHUB_ACTION_PATH/setup-plum.sh" resolve
+
+    - name: Restore Plumlang from the cache
+      id: cache
+      if: inputs.cache == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ${{ steps.resolve.outputs.dir }}
+          ${{ steps.resolve.outputs.dir }}.complete
+        key: setup-plum-${{ steps.resolve.outputs.version }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.resolve.outputs.target }}
+
+    - name: Install Plumlang
+      id: install
+      shell: bash
+      env:
+        PLUM_VERSION: ${{ steps.resolve.outputs.version }}
+        PLUM_REUSE: ${{ inputs.cache }}
+      run: bash "$GITHUB_ACTION_PATH/setup-plum.sh" install
+
+    - name: Save Plumlang to the cache
+      if: inputs.cache == 'true' && steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ${{ steps.resolve.outputs.dir }}
+          ${{ steps.resolve.outputs.dir }}.complete
+        key: ${{ steps.cache.outputs.cache-primary-key }}
+
+    - name: Show the Plumlang version
+      shell: bash
+      run: plum --version

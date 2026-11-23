@@ -1,0 +1,141 @@
+# SPDX-License-Identifier: MIT WITH Plumlang-trademarks
+name: test
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1" # weekly, to catch new releases and runner changes
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: ${{ matrix.os }} / ${{ matrix.version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest # Linux x64
+          - ubuntu-24.04-arm # Linux arm64
+          - macos-latest # macOS arm64
+          - macos-15-intel # macOS x64
+          - windows-latest # Windows x64
+          - windows-11-arm # Windows arm64
+        version: [latest, "2.1.4"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Plumlang
+        id: plum
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+
+      - name: Check the version
+        shell: bash
+        env:
+          WANT: ${{ matrix.version }}
+          GOT: ${{ steps.plum.outputs.version }}
+          DIR: ${{ steps.plum.outputs.path }}
+        run: |
+          set -eux
+          [ -n "$GOT" ] && [ -n "$DIR" ]
+          if [ "$WANT" != latest ]; then [ "$GOT" = "$WANT" ]; fi
+          plum --version | grep -F "plum $GOT "
+          plum version | grep -F "plum $GOT "
+          ls "$DIR"
+
+      - name: Run a program
+        shell: bash
+        run: |
+          set -eux
+          printf 'plant name = "Plumlang"\ndrop("hello from {name}")\n' > hello.plum
+          plum check hello.plum
+          plum fmt --check hello.plum
+          [ "$(plum run hello.plum | tr -d '\r')" = "hello from Plumlang" ]
+
+      - name: Set up Plumlang again (reuses the install)
+        id: again
+        uses: ./
+        with:
+          version: ${{ steps.plum.outputs.version }}
+
+      - name: Check the second set-up
+        shell: bash
+        env:
+          FIRST: ${{ steps.plum.outputs.path }}
+          SECOND: ${{ steps.again.outputs.path }}
+        run: '[ "$FIRST" = "$SECOND" ]'
+
+  versions:
+    name: version prefixes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["2", "2.1", "v2.1.4", "v2"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Plumlang
+        id: plum
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+          cache: false
+      - name: Check the version
+        env:
+          WANT: ${{ matrix.version }}
+          GOT: ${{ steps.plum.outputs.version }}
+        run: |
+          set -eux
+          prefix="${WANT#v}"
+          case "$GOT" in "$prefix" | "$prefix".*) ;; *) exit 1 ;; esac
+          plum --version | grep -F "plum $GOT "
+
+  bad-checksum:
+    name: a tampered download fails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Make a mirror with a tampered archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eux
+          mirror="$RUNNER_TEMP/mirror/v2.1.4"
+          mkdir -p "$mirror"
+          gh release download v2.1.4 -R plumlang/plumlang -D "$mirror" \
+            -p SHA256SUMS -p plum-2.1.4-linux-x86_64.tar.gz
+          printf 'tampered' >> "$mirror/plum-2.1.4-linux-x86_64.tar.gz"
+          echo "PLUM_DOWNLOAD_BASE=file://$RUNNER_TEMP/mirror" >> "$GITHUB_ENV"
+
+      - name: Set up Plumlang from the mirror
+        id: plum
+        continue-on-error: true
+        uses: ./
+        with:
+          version: "2.1.4"
+          cache: false
+
+      - name: Check it failed and installed nothing
+        env:
+          OUTCOME: ${{ steps.plum.outcome }}
+        run: |
+          set -eux
+          [ "$OUTCOME" = failure ]
+          if command -v plum; then exit 1; fi
+          [ ! -e "$RUNNER_TOOL_CACHE/plum/2.1.4/linux-x86_64" ]
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: shellcheck
+        run: shellcheck setup-plum.sh
